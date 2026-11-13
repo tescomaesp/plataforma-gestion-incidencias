@@ -1,0 +1,54 @@
+# Publica la web en GitHub Pages cada vez que se sube un cambio a main.
+# Necesita dos variables del repositorio (Settings > Secrets and variables >
+# Actions > Variables): SUPABASE_URL y SUPABASE_ANON_KEY.
+name: Publicar web
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.despliegue.outputs.page_url }}
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Comprobar configuración
+        run: |
+          if [ -z "${{ vars.SUPABASE_URL }}" ] || [ -z "${{ vars.SUPABASE_ANON_KEY }}" ]; then
+            echo "::error::Faltan las variables SUPABASE_URL y SUPABASE_ANON_KEY del repositorio."
+            exit 1
+          fi
+      - run: npm install --no-audit --no-fund
+      - run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
+          VITE_LOGIN_DOMAIN: tiendas.local
+          VITE_BASE: /${{ github.event.repository.name }}/
+      # GitHub Pages no conoce las rutas de la app: 404.html la sirve igualmente.
+      - run: cp dist/index.html dist/404.html
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/dist
+      - id: despliegue
+        uses: actions/deploy-pages@v4
