@@ -1,0 +1,6 @@
+# Configuración mínima para la CLI de Supabase (supabase link / db push / functions deploy).
+project_id = "incidencias-garantia"
+
+[functions.usuarios]
+# La función comprueba el token ella misma, pero Supabase también lo exige.
+verify_jwt = true
