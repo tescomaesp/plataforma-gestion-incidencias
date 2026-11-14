@@ -32,7 +32,7 @@ export default function Login() {
           <Aviso tipo="error">Este usuario no tiene acceso a la plataforma. Contacta con la central.</Aviso>
         )}
         {error && <Aviso tipo="error">{error}</Aviso>}
-        <Campo id="usuario" etiqueta="Usuario" autoComplete="username" autoCapitalize="none" required
+        <Campo id="usuario" etiqueta="Usuario o email" autoComplete="username" autoCapitalize="none" required
           placeholder="tienda01" value={usuario} onChange={(e) => setUsuario(e.target.value)} />
         <Campo id="password" etiqueta="Contraseña" type="password" autoComplete="current-password" required
           value={password} onChange={(e) => setPassword(e.target.value)} />
