@@ -13,7 +13,11 @@ export const supabase = createClient(url, anonKey, {
 });
 
 export const DOMINIO_LOGIN = (import.meta.env.VITE_LOGIN_DOMAIN as string) || 'tiendas.local';
-export const emailDeUsuario = (username: string) => `${username.trim().toLowerCase()}@${DOMINIO_LOGIN}`;
+// Las tiendas entran con su usuario (tienda01…); la central puede entrar con su email completo.
+export const emailDeUsuario = (usuario: string) => {
+  const u = usuario.trim().toLowerCase();
+  return u.includes('@') ? u : `${u}@${DOMINIO_LOGIN}`;
+};
 
 /** Llama a la Edge Function "usuarios" y devuelve un error legible si falla. */
 export async function llamarUsuarios<T>(body: Record<string, unknown>): Promise<T> {
