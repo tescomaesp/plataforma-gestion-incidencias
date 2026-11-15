@@ -5,7 +5,7 @@ import { useSesion } from '../auth/Sesion';
 import { Aviso, Boton, Campo } from '../components/ui';
 
 export default function Login() {
-  const { sesion, perfil, cargando } = useSesion();
+  const { sesion, perfil, cargando, motivoSalida, errorPerfil, salir } = useSesion();
   const [parametros] = useSearchParams();
   const [usuario, setUsuario] = useState(parametros.get('usuario') ?? '');
   const [password, setPassword] = useState('');
@@ -29,8 +29,16 @@ export default function Login() {
           <h1 className="text-2xl font-bold">Incidencias de garantía</h1>
           <p className="text-acero">Entra con el usuario de tu tienda.</p>
         </div>
+        {!sesion && motivoSalida && !error && <Aviso tipo="error">{motivoSalida}</Aviso>}
         {sesion && !cargando && !perfil?.active && (
-          <Aviso tipo="error">Este usuario no tiene acceso a la plataforma. Contacta con la central.</Aviso>
+          <>
+            <Aviso tipo="error">
+              {errorPerfil
+                ? `Has entrado, pero no se ha podido cargar tu perfil: ${errorPerfil}. Avisa a la central.`
+                : 'Este usuario no tiene acceso a la plataforma. Contacta con la central.'}
+            </Aviso>
+            <Boton type="button" variante="secundario" onClick={salir}>Cerrar sesión</Boton>
+          </>
         )}
         {error && <Aviso tipo="error">{error}</Aviso>}
         <Campo id="usuario" etiqueta="Usuario o email" autoComplete="username" autoCapitalize="none" required
