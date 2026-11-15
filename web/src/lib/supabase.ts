@@ -13,11 +13,24 @@ export const supabase = createClient(url, anonKey, {
 });
 
 export const DOMINIO_LOGIN = (import.meta.env.VITE_LOGIN_DOMAIN as string) || 'tiendas.local';
-// Las tiendas entran con su usuario (tienda01…); la central puede entrar con su email completo.
-export const emailDeUsuario = (usuario: string) => {
-  const u = usuario.trim().toLowerCase();
-  return u.includes('@') ? u : `${u}@${DOMINIO_LOGIN}`;
-};
+/**
+ * Email interno de Supabase Auth para un nombre de usuario. Debe coincidir con
+ * emailDeUsuario() de la función "usuarios". Los nombres sencillos (tienda01) se
+ * usan tal cual; los que llevan espacios, tildes o mayúsculas, un identificador
+ * derivado. Quien escriba un email completo entra con ese email.
+ */
+const NOMBRE_SENCILLO = /^[a-z0-9._-]{3,50}$/;
+export async function emailDeUsuario(usuario: string): Promise<string> {
+  const u = usuario.normalize('NFC').trim().replace(/\s+/g, ' ').toLowerCase();
+  if (u.includes('@')) return u;
+  if (NOMBRE_SENCILLO.test(u)) return `${u}@${DOMINIO_LOGIN}`;
+  const h = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(u)));
+  return `u-${Array.from(h.slice(0, 12), (b) => b.toString(16).padStart(2, '0')).join('')}@${DOMINIO_LOGIN}`;
+}
+
+/** Enlace de acceso a la plataforma, con el usuario ya escrito. */
+export const enlaceAcceso = (usuario?: string) =>
+  `${location.origin}${import.meta.env.BASE_URL}login${usuario ? `?usuario=${encodeURIComponent(usuario)}` : ''}`;
 
 /** Llama a la Edge Function "usuarios" y devuelve un error legible si falla. */
 export async function llamarUsuarios<T>(body: Record<string, unknown>): Promise<T> {
