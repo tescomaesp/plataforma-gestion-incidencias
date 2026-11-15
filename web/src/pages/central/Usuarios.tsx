@@ -3,6 +3,7 @@ import { llamarUsuarios, mensajeError, supabase } from '../../lib/supabase';
 import type { Perfil, Rol, Tienda } from '../../lib/tipos';
 import { useSesion } from '../../auth/Sesion';
 import { Aviso, Boton, Campo, Dialogo, PasswordTemporal } from '../../components/ui';
+import { ROLES } from '../../lib/formato';
 
 type Credencial = { usuario: string; password: string } | null;
 
@@ -78,7 +79,7 @@ export default function Usuarios() {
             {perfiles.map((p) => (
               <tr key={p.id} className={`border-b border-linea last:border-0 ${p.active ? '' : 'text-acero'}`}>
                 <td className="p-3 font-bold">{p.username}</td>
-                <td className="p-3">{p.role === 'MASTER' ? 'Central' : 'Tienda'}</td>
+                <td className="p-3">{ROLES[p.role]}</td>
                 <td className="p-3">{nombreTienda(p.store_id)}</td>
                 <td className="p-3">
                   {!p.active ? 'Desactivado' : p.must_change_password ? 'Pendiente de primer acceso' : 'Activo'}
@@ -101,13 +102,13 @@ export default function Usuarios() {
         <h2 className="text-xl font-bold">Crear usuario</h2>
         <Campo id="nuevo-usuario" etiqueta="Nombre de usuario" required value={nuevoUsuario}
           onChange={(e) => setNuevoUsuario(e.target.value)} autoCapitalize="none"
-          ayuda="En minúsculas, sin espacios. Por ejemplo: tienda10" />
-        <fieldset className="flex gap-6">
+          ayuda="En minúsculas, sin espacios. Por ejemplo: tienda10 o incidencias" />
+        <fieldset className="flex flex-wrap gap-x-6 gap-y-2">
           <legend className="mb-1 font-bold">Tipo</legend>
-          {(['STORE', 'MASTER'] as const).map((r) => (
+          {(['STORE', 'RESPONSABLE', 'ADMIN'] as const).map((r) => (
             <label key={r} className="flex items-center gap-2">
               <input type="radio" name="rol" checked={nuevoRol === r} onChange={() => setNuevoRol(r)} className="size-5 accent-esmalte" />
-              {r === 'STORE' ? 'Tienda' : 'Central'}
+              {ROLES[r]}
             </label>
           ))}
         </fieldset>
