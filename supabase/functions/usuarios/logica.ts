@@ -1,7 +1,7 @@
 // Lógica de la Edge Function "usuarios", independiente de Supabase para poder
 // probarla con dependencias simuladas (ver logica.test.ts).
 
-export type Rol = "MASTER" | "STORE";
+export type Rol = "ADMIN" | "RESPONSABLE" | "STORE";
 export interface Perfil {
   id: string;
   username: string;
@@ -56,9 +56,9 @@ async function exigirPerfilActivo(deps: Deps, token: string | null): Promise<Per
   return perfil;
 }
 
-async function exigirCentral(deps: Deps, token: string | null): Promise<Perfil> {
+async function exigirAdmin(deps: Deps, token: string | null): Promise<Perfil> {
   const p = await exigirPerfilActivo(deps, token);
-  if (p.role !== "MASTER") throw new ErrorHttp(403, "Solo la central puede gestionar usuarios.");
+  if (p.role !== "ADMIN") throw new ErrorHttp(403, "Solo el administrador puede gestionar usuarios.");
   return p;
 }
 
@@ -66,12 +66,12 @@ async function exigirCentral(deps: Deps, token: string | null): Promise<Perfil> 
 export async function ejecutar(deps: Deps, token: string | null, body: any): Promise<unknown> {
   switch (body?.accion) {
     case "crear": {
-      await exigirCentral(deps, token);
+      await exigirAdmin(deps, token);
       const username = String(body.username ?? "").trim().toLowerCase();
       if (!/^[a-z0-9._-]{3,50}$/.test(username)) {
         throw new ErrorHttp(400, "El usuario debe tener 3-50 caracteres: letras, números, punto, guion o guion bajo.");
       }
-      const role: Rol = body.role === "MASTER" ? "MASTER" : "STORE";
+      const role: Rol = body.role === "ADMIN" || body.role === "RESPONSABLE" ? body.role : "STORE";
       const store_id = role === "STORE" ? Number(body.store_id) : null;
       if (role === "STORE" && (!Number.isInteger(store_id) || !(await deps.tiendaActiva(store_id!)))) {
         throw new ErrorHttp(400, "Elige una tienda activa para este usuario.");
@@ -90,7 +90,7 @@ export async function ejecutar(deps: Deps, token: string | null, body: any): Pro
     }
 
     case "restablecer": {
-      await exigirCentral(deps, token);
+      await exigirAdmin(deps, token);
       const objetivo = await deps.obtenerPerfil(String(body.user_id));
       if (!objetivo) throw new ErrorHttp(404, "No existe ese usuario.");
       const password = passwordTemporal();
@@ -100,12 +100,12 @@ export async function ejecutar(deps: Deps, token: string | null, body: any): Pro
     }
 
     case "activar": {
-      const yo = await exigirCentral(deps, token);
+      const yo = await exigirAdmin(deps, token);
       const objetivo = await deps.obtenerPerfil(String(body.user_id));
       if (!objetivo) throw new ErrorHttp(404, "No existe ese usuario.");
       const activo = body.activo === true;
       if (!activo && objetivo.id === yo.id) throw new ErrorHttp(400, "No puedes desactivar tu propio usuario.");
-      // Primero el perfil: el trigger de la base de datos impide dejar la central sin usuarios.
+      // Primero el perfil: el trigger de la base de datos impide quedarse sin administradores.
       await deps.actualizarPerfil(objetivo.id, { active: activo });
       await deps.bloquearAuth(objetivo.id, !activo);
       return { username: objetivo.username, activo };

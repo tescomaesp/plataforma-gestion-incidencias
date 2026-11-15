@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
     if (e instanceof ErrorHttp) return json({ error: e.message }, e.status);
     const msg = e instanceof Error ? e.message : String(e);
     // El trigger de la base de datos devuelve mensajes ya pensados para el usuario.
-    if (msg.includes("al menos un usuario de central")) return json({ error: msg }, 400);
+    if (msg.includes("al menos un administrador")) return json({ error: msg }, 400);
     console.error(e);
     return json({ error: "No se ha podido completar la operación. Inténtalo de nuevo." }, 500);
   }
