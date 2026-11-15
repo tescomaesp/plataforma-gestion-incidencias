@@ -110,3 +110,13 @@ export function AreaTexto({ etiqueta, ayuda, id, ...p }:
 export function Pastilla({ className = '', children }: { className?: string; children: ReactNode }) {
   return <span className={`inline-block whitespace-nowrap rounded-full px-3 py-0.5 text-sm font-bold ${className}`}>{children}</span>;
 }
+
+/** Aviso del ticket de compra: verde si lo entrega, rojo si no. */
+export function EntregaTicket({ entregado, grande = false }: { entregado: boolean; grande?: boolean }) {
+  return (
+    <span className={`inline-block font-bold uppercase tracking-wide ${entregado ? 'text-[#1E7B34]' : 'text-[#C62828]'}
+      ${grande ? `rounded-md border-2 px-4 py-2 text-2xl ${entregado ? 'border-[#1E7B34] bg-[#E6F4EA]' : 'border-[#C62828] bg-[#FDECEA]'}` : 'text-sm'}`}>
+      {entregado ? 'SÍ ENTREGA TICKET' : 'NO ENTREGA TICKET'}
+    </span>
+  );
+}

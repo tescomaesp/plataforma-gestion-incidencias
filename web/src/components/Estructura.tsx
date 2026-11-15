@@ -45,9 +45,11 @@ export default function Estructura() {
           </nav>
 
           <div className="ml-auto flex items-center gap-1">
-            <NavLink to="/cambiar-password" className="rounded-md px-3 py-2 text-sm font-bold text-white hover:bg-white/15">
-              Contraseña
-            </NavLink>
+            {esCentral && (
+              <NavLink to="/cambiar-password" className="rounded-md px-3 py-2 text-sm font-bold text-white hover:bg-white/15">
+                Contraseña
+              </NavLink>
+            )}
             <button onClick={salir} className="rounded-md px-3 py-2 font-bold text-white hover:bg-white/15">
               Cerrar sesión
             </button>
