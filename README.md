@@ -53,8 +53,9 @@ supabase secrets set LOGIN_DOMAIN=tiendas.local APP_ORIGIN=https://tu-app.vercel
 supabase functions deploy usuarios
 ```
 
-`APP_ORIGIN` es la dirección donde publicarás la web (paso 5). Mientras no la
-tengas, puedes omitirlo.
+`APP_ORIGIN` es el origen de la web publicada: solo desde ahí se puede llamar a la
+función. Si no lo defines, se usa `https://tescomaesp.github.io` (GitHub Pages).
+Defínelo si publicas en otro dominio o para hacer pruebas en local.
 
 ### 4. Crear los usuarios iniciales
 
@@ -141,6 +142,20 @@ deno test --node-modules-dir=none supabase/functions/usuarios/   # 9 pruebas de 
 
 ## Seguridad: cómo funciona
 
+- **Qué es público.** El repositorio y la web son públicos, pero los datos no.
+  - **Clave pública (`anon` o *publishable*):** es la única que lleva la web. Sin sesión no da acceso a nada: la base de datos responde «permiso denegado».
+  - **Clave secreta (`service_role`):** solo vive en Supabase, dentro de la función `usuarios`.
+  - **Ficheros `.env`:** nunca se suben, y el `.gitignore` también bloquea copias de seguridad y exportaciones (`.csv`, `.sql`, `.json`, `.xlsx`, `.sqlite`…).
+- **Las contraseñas no se guardan en ningún sitio.** El administrador no puede ver ninguna. Si alguien la olvida, pulsa **Nueva contraseña**: se genera una temporal que se muestra una sola vez y que el usuario debe cambiar en su primer acceso.
+- **`supabase/security_fix.sql` (la migración 7).** Se puede ejecutar cuando se quiera en el SQL Editor, por ejemplo tras crear tablas a mano:
+  - activa RLS en todas las tablas;
+  - elimina cualquier política para usuarios sin sesión;
+  - retira a los anónimos todo permiso, también sobre lo que se cree después;
+  - fija la ruta de búsqueda de las funciones;
+  - impide que haya archivos públicos.
+
+  No cambia lo que puede hacer cada rol.
+- **Sesión.** Si caduca o se cierra en otra pestaña, la plataforma vuelve al acceso y lo explica.
 - Cada tabla tiene Row Level Security. Una tienda solo puede leer los datos de
   su tienda, aunque manipule la API: lo impide la propia base de datos.
 - Altas, contraseñas y desactivaciones pasan por la función `usuarios`, que

@@ -1,6 +1,59 @@
+# Dependencias y compilación
 node_modules/
 dist/
+dist-ssr/
+*.tsbuildinfo
+.vite/
+
+# Variables de entorno y secretos: NUNCA se suben (la clave pública va en los ajustes de GitHub)
 .env
-.env.local
+.env.*
+!.env.example
+supabase/functions/.env
+web/.env
+web/.env.*
+!web/.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Copias de seguridad y exportaciones de datos reales
+# (los únicos .sql que se suben están en supabase/ y son del esquema, sin datos)
+*.csv
+*.tsv
+*.xlsx
+*.xls
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.bak
+*.backup
+backup*/
+copias*/
+exportaciones/
+*.sql
+!supabase/**/*.sql
+*.json
+!**/package.json
+!**/package-lock.json
+!**/tsconfig*.json
+!**/vercel.json
+!supabase/**/*.json
+
+# Supabase CLI
 supabase/.temp/
 supabase/.branches/
+
+# Temporales, registros y sistema
+*.log
+npm-debug.log*
+*.tmp
+*.swp
+*~
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
