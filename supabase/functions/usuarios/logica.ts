@@ -23,7 +23,6 @@ export interface Deps {
   bloquearAuth(id: string, bloqueado: boolean): Promise<void>;
   insertarPerfil(p: Omit<Perfil, "active">): Promise<void>;
   actualizarPerfil(id: string, cambios: Partial<Perfil>): Promise<void>;
-  guardarPassword(id: string, password: string): Promise<void>;   // copia cifrada visible para el admin
   dominioLogin: string;
 }
 
@@ -101,7 +100,6 @@ export async function ejecutar(deps: Deps, token: string | null, body: any): Pro
         await deps.borrarUsuarioAuth(id); // no dejar usuarios de Auth huérfanos
         throw e;
       }
-      await deps.guardarPassword(id, password);
       return { id, username, password_temporal: password };
     }
 
@@ -112,7 +110,6 @@ export async function ejecutar(deps: Deps, token: string | null, body: any): Pro
       const password = passwordTemporal();
       await deps.cambiarPasswordAuth(objetivo.id, password);
       await deps.actualizarPerfil(objetivo.id, { must_change_password: true });
-      await deps.guardarPassword(objetivo.id, password);
       return { username: objetivo.username, password_temporal: password };
     }
 
@@ -137,7 +134,6 @@ export async function ejecutar(deps: Deps, token: string | null, body: any): Pro
       const pw = validarPasswordNueva(body.password);
       await deps.cambiarPasswordAuth(yo.id, pw);
       await deps.actualizarPerfil(yo.id, { must_change_password: false });
-      await deps.guardarPassword(yo.id, pw);
       return { ok: true };
     }
 

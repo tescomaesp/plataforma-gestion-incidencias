@@ -8,8 +8,12 @@ const url = Deno.env.get("SUPABASE_URL")!;
 const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const admin = createClient(url, serviceKey, { auth: { persistSession: false } });
 
+// CORS: solo se aceptan llamadas desde la web de la plataforma. Se puede cambiar con
+// el secreto APP_ORIGIN (p. ej. para pruebas en local). Además, siempre se exige el
+// token de sesión de un administrador.
 const cors = {
-  "Access-Control-Allow-Origin": Deno.env.get("APP_ORIGIN") ?? "*",
+  "Access-Control-Allow-Origin": Deno.env.get("APP_ORIGIN") ?? "https://tescomaesp.github.io",
+  "Vary": "Origin",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
@@ -59,9 +63,6 @@ const deps: Deps = {
   },
   async actualizarPerfil(id, cambios) {
     comprobar(await admin.from("profiles").update(cambios).eq("id", id));
-  },
-  async guardarPassword(id, password) {
-    comprobar(await admin.rpc("guardar_password", { p_user: id, p_password: password }));
   },
 };
 
