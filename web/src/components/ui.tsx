@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode } from 'react';
+import React, { useEffect, useRef, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode } from 'react';
 
 type Variante = 'principal' | 'secundario' | 'peligro' | 'discreto' | 'peligroDiscreto';
 const estilos: Record<Variante, string> = {
@@ -80,4 +80,33 @@ export function PasswordTemporal({ usuario, password }: { usuario: string; passw
       </Boton>
     </div>
   );
+}
+
+export function Selector({ etiqueta, id, children, ...p }:
+  React.SelectHTMLAttributes<HTMLSelectElement> & { etiqueta: string; id: string }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label htmlFor={id} className="font-bold">{etiqueta}</label>
+      <select id={id} {...p}
+        className="min-h-11 rounded-md border border-linea bg-white px-3 text-lg focus:border-esmalte focus:outline-none focus:ring-2 focus:ring-esmalte/30">
+        {children}
+      </select>
+    </div>
+  );
+}
+
+export function AreaTexto({ etiqueta, ayuda, id, ...p }:
+  React.TextareaHTMLAttributes<HTMLTextAreaElement> & { etiqueta: string; ayuda?: string; id: string }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label htmlFor={id} className="font-bold">{etiqueta}</label>
+      <textarea id={id} rows={4} {...p}
+        className="rounded-md border border-linea bg-white px-3 py-2 text-lg focus:border-esmalte focus:outline-none focus:ring-2 focus:ring-esmalte/30" />
+      {ayuda && <p className="text-sm text-acero">{ayuda}</p>}
+    </div>
+  );
+}
+
+export function Pastilla({ className = '', children }: { className?: string; children: ReactNode }) {
+  return <span className={`inline-block whitespace-nowrap rounded-full px-3 py-0.5 text-sm font-bold ${className}`}>{children}</span>;
 }
