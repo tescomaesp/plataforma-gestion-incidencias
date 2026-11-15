@@ -82,7 +82,7 @@ export default function NuevoTicket() {
   const [telefono, setTelefono] = useState('');
   const [compra, setCompra] = useState('');
   const [incidencia, setIncidencia] = useState(hoyISO());
-  const [ticketCompra, setTicketCompra] = useState(false);
+  const [ticketCompra, setTicketCompra] = useState<'' | 'si' | 'no'>('');
   const [rgpd, setRgpd] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [enviando, setEnviando] = useState<string | null>(null);
@@ -107,7 +107,9 @@ export default function NuevoTicket() {
     if (!tiendaId) { setError('Elige la tienda de la incidencia.'); return; }
     if (!fueraCatalogo && !producto) { setError('Busca y elige el producto, o marca que no está en el catálogo.'); return; }
     if (fotos.length === 0) { setError('Añade al menos una foto del producto.'); return; }
-    if (!correo.trim() && !telefono.trim()) { setError('Indica el correo o el teléfono del cliente.'); return; }
+    if (!correo.trim()) { setError('Indica el correo electrónico del cliente.'); return; }
+    if (!ticketCompra) { setError('Indica si el cliente entrega el ticket de compra.'); return; }
+    if (!rgpd) { setError('Marca la casilla de consentimiento RGPD.'); return; }
 
     try {
       const rutas: string[] = [];
@@ -129,7 +131,7 @@ export default function NuevoTicket() {
           reason: motivo,
           customer_full_name: nombre, customer_email: correo, customer_phone: telefono,
           purchase_date: compra, incident_date: incidencia,
-          receipt_confirmed: ticketCompra, gdpr_consent: rgpd,
+          receipt_confirmed: ticketCompra === 'si', gdpr_consent: rgpd,
           fotos: rutas,
         },
       });
@@ -147,7 +149,7 @@ export default function NuevoTicket() {
     <form onSubmit={enviar} className="flex max-w-3xl flex-col gap-6">
       <div>
         <h1 className="text-3xl font-bold">Nuevo ticket de incidencia</h1>
-        <p className="text-acero">Todos los campos son obligatorios, salvo el correo o el teléfono: basta con uno de los dos.</p>
+        <p className="text-acero">Todos los campos son obligatorios, salvo el teléfono del cliente (aunque es recomendable).</p>
       </div>
       {error && <Aviso tipo="error">{error}</Aviso>}
 
@@ -207,20 +209,28 @@ export default function NuevoTicket() {
         <legend className="px-1 text-lg font-bold">Cliente y compra</legend>
         <Campo id="nombre" etiqueta="Nombre completo del cliente" required value={nombre} onChange={(e) => setNombre(e.target.value)} />
         <div className="grid gap-4 sm:grid-cols-2">
-          <Campo id="correo" etiqueta="Correo electrónico" type="email" value={correo} onChange={(e) => setCorreo(e.target.value)} />
-          <Campo id="telefono" etiqueta="Teléfono" type="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)} />
+          <Campo id="correo" etiqueta="Correo electrónico" type="email" required value={correo} onChange={(e) => setCorreo(e.target.value)} />
+          <Campo id="telefono" etiqueta="Teléfono (recomendable)" type="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)} />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <Campo id="compra" etiqueta="Fecha de compra" type="date" required max={incidencia || hoyISO()} value={compra} onChange={(e) => setCompra(e.target.value)} />
           <Campo id="incidencia" etiqueta="Fecha de la incidencia" type="date" required min={compra || undefined} max={hoyISO()} value={incidencia} onChange={(e) => setIncidencia(e.target.value)} />
         </div>
-        <label className="flex items-start gap-3">
-          <input type="checkbox" required className="mt-1 size-5 shrink-0 accent-esmalte" checked={ticketCompra} onChange={(e) => setTicketCompra(e.target.checked)} />
-          <span>Confirmo que el cliente ha entregado el <strong>ticket de compra</strong>.</span>
-        </label>
+        <fieldset className="flex flex-col gap-2">
+          <legend className="mb-1 font-bold">¿El cliente entrega el ticket de compra?</legend>
+          <div className="flex flex-wrap gap-3">
+            {([['si', 'Sí, entrega ticket', 'border-salvia bg-salvia-claro text-salvia'], ['no', 'No entrega ticket', 'border-tomate bg-tomate-claro text-tomate']] as const).map(([v, txt, activo]) => (
+              <label key={v} className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-md border-2 px-4 font-bold ${ticketCompra === v ? activo : 'border-linea bg-white'}`}>
+                <input type="radio" name="ticket-compra" value={v} required checked={ticketCompra === v}
+                  onChange={() => setTicketCompra(v)} className="size-5 accent-esmalte" />
+                {txt}
+              </label>
+            ))}
+          </div>
+        </fieldset>
         <label className="flex items-start gap-3">
           <input type="checkbox" required className="mt-1 size-5 shrink-0 accent-esmalte" checked={rgpd} onChange={(e) => setRgpd(e.target.checked)} />
-          <span>El cliente acepta que sus datos se usen para gestionar esta garantía (RGPD).</span>
+          <span><strong>Obligatorio:</strong> el cliente acepta que sus datos se usen para gestionar esta garantía (RGPD).</span>
         </label>
       </fieldset>
 

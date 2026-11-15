@@ -1,12 +1,13 @@
 import { useState, type FormEvent } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useSearchParams } from 'react-router-dom';
 import { emailDeUsuario, mensajeLogin, supabase } from '../lib/supabase';
 import { useSesion } from '../auth/Sesion';
 import { Aviso, Boton, Campo } from '../components/ui';
 
 export default function Login() {
   const { sesion, perfil, cargando } = useSesion();
-  const [usuario, setUsuario] = useState('');
+  const [parametros] = useSearchParams();
+  const [usuario, setUsuario] = useState(parametros.get('usuario') ?? '');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -16,7 +17,7 @@ export default function Login() {
   async function entrar(e: FormEvent) {
     e.preventDefault();
     setError(null); setEnviando(true);
-    const { error } = await supabase.auth.signInWithPassword({ email: emailDeUsuario(usuario), password });
+    const { error } = await supabase.auth.signInWithPassword({ email: await emailDeUsuario(usuario), password });
     setEnviando(false);
     if (error) setError(mensajeLogin(error.message));
   }

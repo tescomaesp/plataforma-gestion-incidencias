@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { llamarUsuarios } from '../lib/supabase';
 import { useSesion } from '../auth/Sesion';
 import { Aviso, Boton, Campo } from '../components/ui';
@@ -12,6 +12,8 @@ export default function CambiarPassword() {
   const [error, setError] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
   const obligatoria = perfil?.must_change_password;
+  // Las tiendas solo eligen contraseña en su primer acceso.
+  if (perfil?.role === 'STORE' && !obligatoria) return <Navigate to="/" replace />;
 
   async function guardar(e: FormEvent) {
     e.preventDefault();

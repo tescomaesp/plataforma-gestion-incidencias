@@ -4,7 +4,7 @@ import { mensajeError, supabase } from '../lib/supabase';
 import { colorEstado, ESTADOS, fecha, RESULTADOS } from '../lib/formato';
 import type { Estado, Incidencia, Resultado, Tienda } from '../lib/tipos';
 import { useSesion } from '../auth/Sesion';
-import { Aviso, Boton, Pastilla } from '../components/ui';
+import { Aviso, Boton, EntregaTicket, Pastilla } from '../components/ui';
 
 type Fila = Incidencia & { stores: { code: string; name: string } | null };
 const POR_PAGINA = 50;
@@ -80,7 +80,7 @@ export default function Tickets() {
             <tr>
               <th className="p-3">Nº</th>{esCentral && <th className="p-3">Tienda</th>}
               <th className="p-3">Producto</th><th className="p-3">Cliente</th>
-              <th className="p-3">Incidencia</th><th className="p-3">Estado</th>
+              <th className="p-3">Incidencia</th><th className="p-3">Ticket compra</th><th className="p-3">Estado</th>
             </tr>
           </thead>
           <tbody>
@@ -93,6 +93,7 @@ export default function Tickets() {
                 <td className="p-3"><span className="font-bold">{f.sku}</span> <span className="text-acero">{f.product_description}</span></td>
                 <td className="p-3">{f.customer_full_name}</td>
                 <td className="p-3 whitespace-nowrap">{fecha(f.incident_date)}</td>
+                <td className="p-3 whitespace-nowrap">{f.is_historical ? '—' : <EntregaTicket entregado={f.receipt_confirmed} />}</td>
                 <td className="p-3">
                   <Pastilla className={colorEstado[f.status]}>{ESTADOS[f.status]}</Pastilla>
                   {f.resolution_type && <span className="ml-2 text-sm text-acero">{RESULTADOS[f.resolution_type as Resultado]}</span>}
@@ -100,7 +101,7 @@ export default function Tickets() {
               </tr>
             ))}
             {!cargando && filas.length === 0 && (
-              <tr><td colSpan={6} className="p-8 text-center text-acero">No hay tickets con estos filtros.</td></tr>
+              <tr><td colSpan={7} className="p-8 text-center text-acero">No hay tickets con estos filtros.</td></tr>
             )}
           </tbody>
         </table>

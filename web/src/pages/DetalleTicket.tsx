@@ -4,7 +4,7 @@ import { mensajeError, supabase } from '../lib/supabase';
 import { colorEstado, ESTADOS, ESTADOS_PRODUCTO, fecha, fechaHora, RESULTADOS } from '../lib/formato';
 import type { Incidencia, Resultado } from '../lib/tipos';
 import { useSesion } from '../auth/Sesion';
-import { AreaTexto, Aviso, Boton, Pastilla, Selector } from '../components/ui';
+import { AreaTexto, Aviso, Boton, EntregaTicket, Pastilla, Selector } from '../components/ui';
 
 type Ficha = Incidencia & { stores: { code: string; name: string } | null; defect_types: { name: string } | null };
 type Evento = { id: number; event_type: string; message: string | null; created_at: string; user_id: string | null };
@@ -76,6 +76,7 @@ export default function DetalleTicket() {
         <h1 className="text-3xl font-bold">{t.number}</h1>
         <Pastilla className={colorEstado[t.status]}>{ESTADOS[t.status]}</Pastilla>
         {t.is_historical && <Pastilla className="bg-porcelana text-acero">Incidencia importada</Pastilla>}
+        {!t.is_historical && <EntregaTicket entregado={t.receipt_confirmed} grande />}
       </div>
       {ok && <Aviso tipo="ok">{ok}</Aviso>}
       {error && <Aviso tipo="error">{error}</Aviso>}
@@ -95,7 +96,7 @@ export default function DetalleTicket() {
               <Dato titulo="Fechas">Compra {fecha(t.purchase_date)} · Incidencia {fecha(t.incident_date)}</Dato>
               <Dato titulo="Cliente">{t.customer_full_name}</Dato>
               <Dato titulo="Contacto">{[t.customer_email, t.customer_phone].filter(Boolean).join(' · ') || '—'}</Dato>
-              <Dato titulo="Ticket de compra">{t.receipt_confirmed ? 'Entregado' : '—'}</Dato>
+              <Dato titulo="Ticket de compra">{t.is_historical ? '—' : <EntregaTicket entregado={t.receipt_confirmed} />}</Dato>
               <Dato titulo="Abierto">{fechaHora(t.created_at)}</Dato>
             </dl>
             <div className="mt-4">

@@ -59,6 +59,7 @@ export default function Panel() {
   const [hasta, setHasta] = useState('');
   const [storeId, setStoreId] = useState('');
   const [historicas, setHistoricas] = useState(true);
+  const [cliente, setCliente] = useState('');
   const [s, setS] = useState<Stats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [exportando, setExportando] = useState(false);
@@ -71,10 +72,11 @@ export default function Panel() {
     setError(null);
     const { data, error } = await supabase.rpc('estadisticas', {
       p_desde: desde || null, p_hasta: hasta || null, p_tienda: storeId ? Number(storeId) : null, p_historicas: historicas,
+      p_cliente: cliente.trim() || null,
     });
     if (error) setError(mensajeError(error)); else setS(data as Stats);
-  }, [desde, hasta, storeId, historicas]);
-  useEffect(() => { cargar(); }, [cargar]);
+  }, [desde, hasta, storeId, historicas, cliente]);
+  useEffect(() => { const t = setTimeout(cargar, 300); return () => clearTimeout(t); }, [cargar]);
 
   async function exportar() {
     if (!s) return;
@@ -89,6 +91,8 @@ export default function Panel() {
         if (hasta) c = c.lte('incident_date', hasta);
         if (storeId) c = c.eq('store_id', Number(storeId));
         if (!historicas) c = c.eq('is_historical', false);
+        const q = cliente.trim().replace(/[,()%]/g, ' ');
+        if (q) c = c.or(`customer_full_name.ilike.%${q}%,customer_email.ilike.%${q}%,customer_phone.ilike.%${q}%`);
         const { data, error } = await c;
         if (error) throw error;
         for (const i of data ?? []) detalle.push([
@@ -99,7 +103,7 @@ export default function Panel() {
         ]);
         if ((data ?? []).length < 1000) break;
       }
-      const filtro = [desde && `desde ${fecha(desde)}`, hasta && `hasta ${fecha(hasta)}`].filter(Boolean).join(' ') || 'todo el periodo';
+      const filtro = [desde && `desde ${fecha(desde)}`, hasta && `hasta ${fecha(hasta)}`, cliente.trim() && `cliente "${cliente.trim()}"`].filter(Boolean).join(' ') || 'todo el periodo';
       await descargarExcel(`incidencias_${hoyISO()}.xlsx`, [
         { nombre: 'Resumen', columnas: [{ titulo: 'Indicador', ancho: 30 }, { titulo: 'Valor', ancho: 16 }], filas: [
           ['Periodo', filtro], ['Total de incidencias', s.resumen.total], ['Abiertas', s.resumen.abiertos],
@@ -134,6 +138,9 @@ export default function Panel() {
       </div>
 
       <div className="flex flex-wrap items-end gap-3 rounded-lg border border-linea bg-white p-4">
+        <label className="flex min-w-64 flex-1 flex-col gap-1 text-sm font-bold">Buscar cliente
+          <input type="search" value={cliente} onChange={(e) => setCliente(e.target.value)} placeholder="Nombre, correo o teléfono"
+            className="min-h-10 rounded-md border border-linea px-2 font-normal" /></label>
         <label className="flex flex-col gap-1 text-sm font-bold">Desde
           <input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} className="min-h-10 rounded-md border border-linea px-2 font-normal" /></label>
         <label className="flex flex-col gap-1 text-sm font-bold">Hasta
