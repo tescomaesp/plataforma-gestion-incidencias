@@ -30,7 +30,9 @@ const deps: Deps = {
     return data as Perfil | null;
   },
   async existeUsername(username) {
-    const { count } = await admin.from("profiles").select("id", { count: "exact", head: true }).eq("username", username);
+    // Sin distinguir mayúsculas; se escapan los comodines de ILIKE.
+    const patron = username.replace(/[\\%_]/g, (c) => "\\" + c);
+    const { count } = await admin.from("profiles").select("id", { count: "exact", head: true }).ilike("username", patron);
     return (count ?? 0) > 0;
   },
   async tiendaActiva(storeId) {
@@ -57,6 +59,9 @@ const deps: Deps = {
   },
   async actualizarPerfil(id, cambios) {
     comprobar(await admin.from("profiles").update(cambios).eq("id", id));
+  },
+  async guardarPassword(id, password) {
+    comprobar(await admin.rpc("guardar_password", { p_user: id, p_password: password }));
   },
 };
 

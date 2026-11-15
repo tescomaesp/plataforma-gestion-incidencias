@@ -23,7 +23,22 @@ export interface Deps {
   bloquearAuth(id: string, bloqueado: boolean): Promise<void>;
   insertarPerfil(p: Omit<Perfil, "active">): Promise<void>;
   actualizarPerfil(id: string, cambios: Partial<Perfil>): Promise<void>;
+  guardarPassword(id: string, password: string): Promise<void>;   // copia cifrada visible para el admin
   dominioLogin: string;
+}
+
+/**
+ * Email interno de Supabase Auth para un nombre de usuario. Debe coincidir con
+ * emailDeUsuario() de la web. Los nombres sencillos (tienda01) se usan tal cual;
+ * los que llevan espacios, tildes o mayúsculas usan un identificador derivado.
+ */
+const NOMBRE_SENCILLO = /^[a-z0-9._-]{3,50}$/;
+export async function emailDeUsuario(usuario: string, dominio: string): Promise<string> {
+  const u = usuario.normalize("NFC").trim().replace(/\s+/g, " ").toLowerCase();
+  if (u.includes("@")) return u;
+  if (NOMBRE_SENCILLO.test(u)) return `${u}@${dominio}`;
+  const h = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(u)));
+  return `u-${Array.from(h.slice(0, 12), (b) => b.toString(16).padStart(2, "0")).join("")}@${dominio}`;
 }
 
 export class ErrorHttp extends Error {
@@ -67,10 +82,10 @@ export async function ejecutar(deps: Deps, token: string | null, body: any): Pro
   switch (body?.accion) {
     case "crear": {
       await exigirAdmin(deps, token);
-      const username = String(body.username ?? "").trim().toLowerCase();
-      if (!/^[a-z0-9._-]{3,50}$/.test(username)) {
-        throw new ErrorHttp(400, "El usuario debe tener 3-50 caracteres: letras, números, punto, guion o guion bajo.");
-      }
+      const username = String(body.username ?? "").normalize("NFC").trim().replace(/\s+/g, " ");
+      if (!username) throw new ErrorHttp(400, "Escribe el nombre de usuario.");
+      if (username.length > 100) throw new ErrorHttp(400, "El nombre de usuario es demasiado largo (máximo 100 caracteres).");
+      if (username.includes("@")) throw new ErrorHttp(400, "El nombre de usuario no puede llevar @.");
       const role: Rol = body.role === "ADMIN" || body.role === "RESPONSABLE" ? body.role : "STORE";
       const store_id = role === "STORE" ? Number(body.store_id) : null;
       if (role === "STORE" && (!Number.isInteger(store_id) || !(await deps.tiendaActiva(store_id!)))) {
@@ -79,13 +94,14 @@ export async function ejecutar(deps: Deps, token: string | null, body: any): Pro
       if (await deps.existeUsername(username)) throw new ErrorHttp(409, `El usuario "${username}" ya existe.`);
 
       const password = passwordTemporal();
-      const id = await deps.crearUsuarioAuth(`${username}@${deps.dominioLogin}`, password);
+      const id = await deps.crearUsuarioAuth(await emailDeUsuario(username, deps.dominioLogin), password);
       try {
         await deps.insertarPerfil({ id, username, role, store_id, must_change_password: true });
       } catch (e) {
         await deps.borrarUsuarioAuth(id); // no dejar usuarios de Auth huérfanos
         throw e;
       }
+      await deps.guardarPassword(id, password);
       return { id, username, password_temporal: password };
     }
 
@@ -96,6 +112,7 @@ export async function ejecutar(deps: Deps, token: string | null, body: any): Pro
       const password = passwordTemporal();
       await deps.cambiarPasswordAuth(objetivo.id, password);
       await deps.actualizarPerfil(objetivo.id, { must_change_password: true });
+      await deps.guardarPassword(objetivo.id, password);
       return { username: objetivo.username, password_temporal: password };
     }
 
@@ -113,9 +130,14 @@ export async function ejecutar(deps: Deps, token: string | null, body: any): Pro
 
     case "cambiar_mi_password": {
       const yo = await exigirPerfilActivo(deps, token);
+      // Las tiendas solo eligen contraseña en su primer acceso; después la gestiona el administrador.
+      if (yo.role === "STORE" && !yo.must_change_password) {
+        throw new ErrorHttp(403, "La contraseña de la tienda solo la puede cambiar el administrador.");
+      }
       const pw = validarPasswordNueva(body.password);
       await deps.cambiarPasswordAuth(yo.id, pw);
       await deps.actualizarPerfil(yo.id, { must_change_password: false });
+      await deps.guardarPassword(yo.id, pw);
       return { ok: true };
     }
 
