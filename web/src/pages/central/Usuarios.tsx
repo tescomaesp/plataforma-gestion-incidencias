@@ -3,10 +3,9 @@ import { enlaceAcceso, llamarUsuarios, mensajeError, supabase } from '../../lib/
 import type { Perfil, Rol, Tienda } from '../../lib/tipos';
 import { useSesion } from '../../auth/Sesion';
 import { Aviso, Boton, Campo, Dialogo, PasswordTemporal } from '../../components/ui';
-import { fechaHora, ROLES } from '../../lib/formato';
+import { ROLES } from '../../lib/formato';
 
 type Credencial = { usuario: string; password: string } | null;
-type Clave = { password: string; updated_at: string };
 
 /** Texto listo para enviar a la tienda por correo o WhatsApp. */
 const mensajeAcceso = (usuario: string, password?: string) =>
@@ -17,8 +16,6 @@ export default function Usuarios() {
   const { perfil: yo } = useSesion();
   const [perfiles, setPerfiles] = useState<Perfil[]>([]);
   const [tiendas, setTiendas] = useState<Tienda[]>([]);
-  const [claves, setClaves] = useState<Record<string, Clave>>({});
-  const [verClaves, setVerClaves] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
   const [credencial, setCredencial] = useState<Credencial>(null);
@@ -29,14 +26,12 @@ export default function Usuarios() {
   const [nuevaTienda, setNuevaTienda] = useState('');
 
   const cargar = useCallback(async () => {
-    const [p, t, c] = await Promise.all([
+    const [p, t] = await Promise.all([
       supabase.from('profiles').select('*').order('username'),
       supabase.from('stores').select('*').order('code'),
-      supabase.rpc('ver_passwords'),
     ]);
     if (p.error || t.error) { setError(mensajeError(p.error ?? t.error)); return; }
     setPerfiles(p.data as Perfil[]); setTiendas(t.data as Tienda[]);
-    setClaves(Object.fromEntries(((c.data ?? []) as (Clave & { user_id: string })[]).map((x) => [x.user_id, x])));
   }, []);
   useEffect(() => { cargar(); }, [cargar]);
 
@@ -92,42 +87,28 @@ export default function Usuarios() {
           <code className="min-w-0 flex-1 break-all rounded bg-white px-3 py-2">{enlaceAcceso()}</code>
           <Boton variante="secundario" onClick={() => copiar(enlaceAcceso(), 'Enlace copiado.')}>Copiar enlace</Boton>
         </div>
-        <p className="text-sm text-acero">Con "Copiar acceso" de cada usuario obtienes el enlace con su usuario ya escrito y su contraseña, listo para enviar.</p>
+        <p className="text-sm text-acero">Con "Copiar acceso" de cada usuario obtienes el enlace con su usuario ya escrito, listo para enviar. Las contraseñas no se guardan en ningún sitio: si alguien la olvida, pulsa "Nueva contraseña" y envíale la temporal.</p>
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-linea bg-white">
-        <div className="flex items-center justify-between gap-3 border-b border-linea p-3">
-          <span className="text-sm text-acero">Solo el administrador ve las contraseñas. Se registran las creadas o cambiadas desde esta plataforma.</span>
-          <label className="flex shrink-0 items-center gap-2 font-bold">
-            <input type="checkbox" className="size-5 accent-esmalte" checked={verClaves} onChange={(e) => setVerClaves(e.target.checked)} />
-            Mostrar contraseñas
-          </label>
-        </div>
-        <table className="w-full min-w-[60rem] text-left">
+        <table className="w-full min-w-[50rem] text-left">
           <thead className="border-b border-linea text-acero">
             <tr><th className="p-3">Usuario</th><th className="p-3">Tipo</th><th className="p-3">Tienda</th>
-              <th className="p-3">Contraseña</th><th className="p-3">Estado</th><th className="p-3"><span className="sr-only">Acciones</span></th></tr>
+              <th className="p-3">Estado</th><th className="p-3"><span className="sr-only">Acciones</span></th></tr>
           </thead>
           <tbody>
             {perfiles.map((p) => {
-              const c = claves[p.id];
               return (
                 <tr key={p.id} className={`border-b border-linea last:border-0 ${p.active ? '' : 'text-acero'}`}>
                   <td className="p-3 font-bold">{p.username}</td>
                   <td className="p-3">{ROLES[p.role]}</td>
                   <td className="p-3">{nombreTienda(p.store_id)}</td>
                   <td className="p-3">
-                    {!c ? <span className="text-sm text-acero">No registrada</span>
-                      : verClaves ? <span><span className="font-mono font-bold select-all">{c.password}</span>
-                        <span className="block text-xs text-acero">{fechaHora(c.updated_at)}</span></span>
-                      : <span className="tracking-widest text-acero">••••••••</span>}
-                  </td>
-                  <td className="p-3">
                     {!p.active ? 'Desactivado' : p.must_change_password ? 'Pendiente de primer acceso' : 'Activo'}
                   </td>
                   <td className="p-3">
                     <div className="flex flex-wrap justify-end gap-2">
-                      <Boton variante="secundario" onClick={() => copiar(mensajeAcceso(p.username, c?.password), `Acceso de ${p.username} copiado: pégalo en un correo o WhatsApp.`)}>
+                      <Boton variante="secundario" onClick={() => copiar(mensajeAcceso(p.username), `Acceso de ${p.username} copiado: pégalo en un correo o WhatsApp.`)}>
                         Copiar acceso</Boton>
                       <Boton variante="secundario" disabled={!!ocupado} onClick={() => restablecer(p)}>Nueva contraseña</Boton>
                       {p.id !== yo?.id && (
@@ -176,6 +157,7 @@ export default function Usuarios() {
       <Dialogo abierto={!!credencial} titulo="Contraseña temporal" onCerrar={() => setCredencial(null)}>
         {credencial && <>
           <PasswordTemporal usuario={credencial.usuario} password={credencial.password} />
+          <p className="text-sm text-acero">Por seguridad, esta contraseña no se guarda: solo se muestra ahora. Cópiala y envíala; en su primer acceso tendrá que cambiarla.</p>
           <Boton variante="secundario" onClick={() => copiar(mensajeAcceso(credencial.usuario, credencial.password), 'Acceso copiado con el enlace, el usuario y la contraseña.')}>
             Copiar acceso completo con enlace</Boton>
         </>}
