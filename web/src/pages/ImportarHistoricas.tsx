@@ -16,7 +16,7 @@ const COLUMNAS = [
   ['Cliente', 'cliente', 'Obligatorio: nombre del cliente.'],
   ['Correo', 'correo', 'Correo o teléfono obligatorio (al menos uno).'],
   ['Teléfono', 'telefono', ''],
-  ['Resultado', 'resultado', 'Cambio, No cubre, Reparación o Compensación. Vacío = sigue abierta.'],
+  ['Resultado', 'resultado', 'Cambio, No cubre, Reparación, Compensación o Vale tienda. Vacío = sigue abierta.'],
   ['Respuesta', 'respuesta', 'Opcional.'],
 ] as const;
 const ALIAS: Record<string, string> = {
