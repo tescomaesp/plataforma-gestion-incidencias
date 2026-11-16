@@ -1,6 +1,6 @@
 export type Rol = 'ADMIN' | 'RESPONSABLE' | 'STORE';
 export type Estado = 'ABIERTO' | 'EN_REVISION' | 'RESUELTO';
-export type Resultado = 'CAMBIO' | 'NO_CUBRE' | 'REPARACION' | 'COMPENSACION';
+export type Resultado = 'CAMBIO' | 'NO_CUBRE' | 'REPARACION' | 'COMPENSACION' | 'VALE_TIENDA';
 export type EstadoProducto = 'ACTIVO' | 'DESCATALOGADO_CON_STOCK' | 'DESCATALOGADO_SIN_STOCK';
 
 export interface Tienda { id: number; code: string; name: string; address: string | null; active: boolean }
