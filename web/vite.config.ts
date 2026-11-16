@@ -11,13 +11,13 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',            // las 9 tiendas reciben las actualizaciones solas
-      includeAssets: ['icono.svg'],
+      includeAssets: ['logo-tescoma.png', 'icono-192.png'],
       manifest: {
-        name: 'Incidencias de garantía',
+        name: 'Tescoma · Incidencias de garantía',
         short_name: 'Incidencias',
         description: 'Gestión de incidencias de garantía entre tiendas y central',
         lang: 'es',
-        theme_color: '#1D4E63',
+        theme_color: '#D40019',
         background_color: '#F5F7F8',
         display: 'standalone',
         start_url: '.',
