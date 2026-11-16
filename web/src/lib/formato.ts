@@ -13,7 +13,7 @@ export const ESTADOS_PRODUCTO: Record<EstadoProducto, string> = {
   ACTIVO: 'Activo', DESCATALOGADO_CON_STOCK: 'Descatalogado · con stock', DESCATALOGADO_SIN_STOCK: 'Descatalogado · sin stock',
 };
 export const colorEstado: Record<Estado, string> = {
-  ABIERTO: 'bg-ambar-claro text-ambar', EN_REVISION: 'bg-esmalte-claro text-esmalte', RESUELTO: 'bg-salvia-claro text-salvia',
+  ABIERTO: 'bg-ambar-claro text-ambar', EN_REVISION: 'bg-pizarra-claro text-pizarra', RESUELTO: 'bg-salvia-claro text-salvia',
 };
 
 /** 2026-11-16 → 16/11/2026 */
