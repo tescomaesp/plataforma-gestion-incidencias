@@ -2,17 +2,21 @@
 
 @theme {
   --font-sans: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
-  --color-esmalte: #1D4E63;
-  --color-esmalte-oscuro: #153A4A;
-  --color-esmalte-claro: #E3EDF1;
+  /* Identidad Tescoma: rojo corporativo #D40019 (tomado del logo). */
+  --color-esmalte: #D40019;
+  --color-esmalte-oscuro: #A80014;
+  --color-esmalte-claro: #FDE8EA;
   --color-porcelana: #F5F7F8;
   --color-tinta: #1E2A30;
   --color-acero: #66757D;
   --color-linea: #D6DDE0;
   --color-ambar: #A8701A;
   --color-ambar-claro: #FBF1DF;
-  --color-tomate: #B23A2E;
-  --color-tomate-claro: #F9E6E3;
+  /* Errores en un rojo más oscuro, para no confundirlos con el rojo de marca. */
+  --color-tomate: #8E1B12;
+  --color-tomate-claro: #FBE3E1;
+  --color-pizarra: #1D4E63;
+  --color-pizarra-claro: #E3EDF1;
   --color-salvia: #3F7D5A;
   --color-salvia-claro: #E4F0E8;
 }
