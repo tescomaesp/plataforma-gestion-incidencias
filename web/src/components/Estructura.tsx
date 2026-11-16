@@ -28,6 +28,7 @@ export default function Estructura() {
     <div className="flex min-h-full flex-col">
       <header className="sticky top-[env(safe-area-inset-top,0px)] z-10 bg-esmalte print:hidden">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3">
+          <img src={`${import.meta.env.BASE_URL}logo-tescoma.png`} alt="Tescoma" className="h-9 w-auto" />
           {esCentral
             ? <Placa codigo="C" nombre="Central" detalle={perfil ? ROLES[perfil.role] : undefined} />
             : tienda && <Placa codigo={tienda.code} nombre={tienda.name} />}
