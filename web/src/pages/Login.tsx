@@ -23,7 +23,8 @@ export default function Login() {
   }
 
   return (
-    <div className="grid min-h-full place-items-center bg-esmalte px-4 py-10">
+    <div className="flex min-h-full flex-col items-center justify-center gap-8 bg-esmalte px-4 py-10">
+      <img src={`${import.meta.env.BASE_URL}logo-tescoma.png`} alt="Tescoma" className="h-16 w-auto" />
       <form onSubmit={entrar} className="flex w-full max-w-sm flex-col gap-5 rounded-lg bg-white p-8">
         <div>
           <h1 className="text-2xl font-bold">Incidencias de garantía</h1>
