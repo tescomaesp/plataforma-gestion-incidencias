@@ -5,7 +5,7 @@ export const ESTADOS: Record<Estado, string> = {
 };
 export const RESULTADOS: Record<Resultado, string> = {
   CAMBIO: 'Cambio', NO_CUBRE: 'No cubre', REPARACION: 'Reparación', COMPENSACION: 'Compensación',
-  VALE_TIENDA: 'Vale tienda',
+  VALE_TIENDA: 'Vale tienda', REEMBOLSO: 'Reembolso',
 };
 export const ROLES: Record<Rol, string> = {
   ADMIN: 'Administrador', RESPONSABLE: 'Responsable de incidencias', STORE: 'Tienda',
