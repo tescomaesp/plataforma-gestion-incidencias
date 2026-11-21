@@ -27,7 +27,7 @@ export default function Tickets() {
   const cargar = useCallback(async (desde: number) => {
     setCargando(true); setError(null);
     let c = supabase.from('incidents').select('*, stores(code, name)')
-      .order('created_at', { ascending: false }).range(desde, desde + POR_PAGINA);
+      .is('deleted_at', null).order('created_at', { ascending: false }).range(desde, desde + POR_PAGINA);
     if (estado === 'PENDIENTES') c = c.in('status', ['ABIERTO', 'EN_REVISION']);
     else if (estado !== 'TODOS') c = c.eq('status', estado);
     if (tienda) c = c.eq('store_id', Number(tienda));

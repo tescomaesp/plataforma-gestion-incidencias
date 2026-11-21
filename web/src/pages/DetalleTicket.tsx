@@ -11,6 +11,7 @@ type Evento = { id: number; event_type: string; message: string | null; created_
 const TEXTO_EVENTO: Record<string, string> = {
   CREADO: 'Ticket abierto', EN_REVISION: 'Pasa a revisión', REABIERTO: 'Vuelve a abierto',
   RESUELTO: 'Resuelto', IMPORTADO: 'Importado de incidencias antiguas',
+  BORRADO: 'Borrada', RESTAURADO: 'Restaurada',
 };
 
 function Dato({ titulo, children }: { titulo: string; children: ReactNode }) {
@@ -20,7 +21,7 @@ function Dato({ titulo, children }: { titulo: string; children: ReactNode }) {
 export default function DetalleTicket() {
   const { id } = useParams();
   const { state } = useLocation() as { state: { creado?: string } | null };
-  const { esCentral } = useSesion();
+  const { esCentral, esAdmin } = useSesion();
   const [t, setT] = useState<Ficha | null>(null);
   const [fotos, setFotos] = useState<string[]>([]);
   const [eventos, setEventos] = useState<Evento[]>([]);
@@ -79,6 +80,14 @@ export default function DetalleTicket() {
         {!t.is_historical && <EntregaTicket entregado={t.receipt_confirmed} grande />}
       </div>
       {ok && <Aviso tipo="ok">{ok}</Aviso>}
+      {t.deleted_at && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border-2 border-tomate bg-tomate-claro p-4 text-tomate">
+          <p><strong>Incidencia borrada</strong> el {fechaHora(t.deleted_at)}{t.delete_reason && <> · Motivo: {t.delete_reason}</>}.
+            <span className="block text-sm">No aparece en el listado ni en las estadísticas, y la tienda ya no la ve.</span></p>
+          {esAdmin && <Boton variante="secundario" disabled={ocupado}
+            onClick={() => accion(() => supabase.rpc('restaurar_incidencia', { p_id: t.id }), 'Incidencia restaurada.')}>Restaurar</Boton>}
+        </div>
+      )}
       {error && <Aviso tipo="error">{error}</Aviso>}
 
       <div className="grid gap-6 lg:grid-cols-[1fr_22rem]">
@@ -123,7 +132,7 @@ export default function DetalleTicket() {
             </div>
           )}
 
-          {esCentral && t.status !== 'RESUELTO' && (
+          {esCentral && t.status !== 'RESUELTO' && !t.deleted_at && (
             <form onSubmit={resolver} className="flex flex-col gap-4 rounded-lg border border-esmalte bg-white p-5">
               <h2 className="text-xl font-bold">Responder al ticket</h2>
               <Selector id="resultado" etiqueta="Resultado" required value={resultado} onChange={(e) => setResultado(e.target.value)}>
@@ -142,6 +151,16 @@ export default function DetalleTicket() {
                   Volver a abierto</Boton>}
               </div>
             </form>
+          )}
+          {esAdmin && !t.deleted_at && (
+            <div className="flex flex-wrap items-center gap-3 border-t border-linea pt-4">
+              <Boton variante="peligroDiscreto" disabled={ocupado} onClick={() => {
+                const motivo = prompt(`¿Por qué borras la incidencia ${t.number}? (por ejemplo: duplicada, abierta por error)`);
+                if (motivo === null) return;
+                accion(() => supabase.rpc('borrar_incidencia', { p_id: t.id, p_motivo: motivo }), 'Incidencia borrada. Queda en el panel, en "Incidencias borradas".');
+              }}>Borrar incidencia</Boton>
+              <span className="text-sm text-acero">Sale del listado y de las estadísticas, pero queda guardada aparte y se puede restaurar.</span>
+            </div>
           )}
         </div>
 

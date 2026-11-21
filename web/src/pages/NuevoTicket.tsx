@@ -107,7 +107,7 @@ export default function NuevoTicket() {
     if (!tiendaId) { setError('Elige la tienda de la incidencia.'); return; }
     if (!fueraCatalogo && !producto) { setError('Busca y elige el producto, o marca que no está en el catálogo.'); return; }
     if (fotos.length === 0) { setError('Añade al menos una foto del producto.'); return; }
-    if (!correo.trim()) { setError('Indica el correo electrónico del cliente.'); return; }
+    if (!telefono.trim()) { setError('Indica el teléfono del cliente.'); return; }
     if (!ticketCompra) { setError('Indica si el cliente entrega el ticket de compra.'); return; }
     if (!rgpd) { setError('Marca la casilla de consentimiento RGPD.'); return; }
 
@@ -149,7 +149,7 @@ export default function NuevoTicket() {
     <form onSubmit={enviar} className="flex max-w-3xl flex-col gap-6">
       <div>
         <h1 className="text-3xl font-bold">Nuevo ticket de incidencia</h1>
-        <p className="text-acero">Todos los campos son obligatorios, salvo el teléfono del cliente (aunque es recomendable).</p>
+        <p className="text-acero">Todos los campos son obligatorios, salvo el correo del cliente (aunque es recomendable).</p>
       </div>
       {error && <Aviso tipo="error">{error}</Aviso>}
 
@@ -209,8 +209,8 @@ export default function NuevoTicket() {
         <legend className="px-1 text-lg font-bold">Cliente y compra</legend>
         <Campo id="nombre" etiqueta="Nombre completo del cliente" required value={nombre} onChange={(e) => setNombre(e.target.value)} />
         <div className="grid gap-4 sm:grid-cols-2">
-          <Campo id="correo" etiqueta="Correo electrónico" type="email" required value={correo} onChange={(e) => setCorreo(e.target.value)} />
-          <Campo id="telefono" etiqueta="Teléfono (recomendable)" type="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)} />
+          <Campo id="telefono" etiqueta="Teléfono" type="tel" required value={telefono} onChange={(e) => setTelefono(e.target.value)} />
+          <Campo id="correo" etiqueta="Correo electrónico (recomendable)" type="email" value={correo} onChange={(e) => setCorreo(e.target.value)} />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <Campo id="compra" etiqueta="Fecha de compra" type="date" required max={incidencia || hoyISO()} value={compra} onChange={(e) => setCompra(e.target.value)} />

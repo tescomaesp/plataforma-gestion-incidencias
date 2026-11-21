@@ -7,6 +7,11 @@ import type { Estado, Resultado, Tienda } from '../lib/tipos';
 import { useSesion } from '../auth/Sesion';
 import { Aviso, Boton } from '../components/ui';
 
+interface Borrada {
+  id: number; number: string; incident_date: string; deleted_at: string; delete_reason: string | null;
+  customer_full_name: string; sku: string; product_description: string; stores: { code: string; name: string } | null;
+}
+
 interface Stats {
   resumen: { total: number; abiertos: number; en_revision: number; resueltos: number };
   productos: { sku: string; descripcion: string; incidencias: number }[];
@@ -63,6 +68,15 @@ export default function Panel() {
   const [s, setS] = useState<Stats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [exportando, setExportando] = useState(false);
+  const [borradas, setBorradas] = useState<Borrada[]>([]);
+
+  // Incidencias borradas por el administrador: fuera de las estadísticas, pero visibles aparte.
+  useEffect(() => {
+    if (!esCentral) return;
+    supabase.from('incidents').select('id, number, incident_date, deleted_at, delete_reason, customer_full_name, sku, product_description, stores(code, name)')
+      .not('deleted_at', 'is', null).order('deleted_at', { ascending: false }).limit(200)
+      .then(({ data }) => setBorradas((data ?? []) as unknown as Borrada[]));
+  }, [esCentral]);
 
   useEffect(() => {
     if (esCentral) supabase.from('stores').select('*').order('code').then(({ data }) => setTiendas((data ?? []) as Tienda[]));
@@ -86,7 +100,7 @@ export default function Panel() {
       const detalle: (string | number | null)[][] = [];
       for (let desdeFila = 0; ; desdeFila += 1000) {
         let c = supabase.from('incidents').select('*, stores(code, name), defect_types(name)')
-          .order('incident_date', { ascending: false }).range(desdeFila, desdeFila + 999);
+          .is('deleted_at', null).order('incident_date', { ascending: false }).range(desdeFila, desdeFila + 999);
         if (desde) c = c.gte('incident_date', desde);
         if (hasta) c = c.lte('incident_date', hasta);
         if (storeId) c = c.eq('store_id', Number(storeId));
@@ -123,6 +137,11 @@ export default function Panel() {
           { titulo: 'Cliente', ancho: 25 }, { titulo: 'Correo', ancho: 28 }, { titulo: 'Teléfono', texto: true }, { titulo: 'Estado' },
           { titulo: 'Resultado' }, { titulo: 'Respuesta', ancho: 50 }, { titulo: 'Fecha resolución' }, { titulo: 'Importada' },
         ], filas: detalle },
+        ...(esCentral && borradas.length ? [{ nombre: 'Borradas', columnas: [{ titulo: 'Nº' }, { titulo: 'Tienda', ancho: 25 },
+          { titulo: 'Fecha incidencia' }, { titulo: 'Referencia', texto: true }, { titulo: 'Cliente', ancho: 25 },
+          { titulo: 'Borrada el' }, { titulo: 'Motivo', ancho: 40 }],
+          filas: borradas.map((b) => [b.number, `${b.stores?.code ?? ''} · ${b.stores?.name ?? ''}`, b.incident_date, b.sku,
+            b.customer_full_name, fecha(b.deleted_at), b.delete_reason]) }] : []),
       ]);
     } catch (e) { setError(mensajeError(e)); } finally { setExportando(false); }
   }
@@ -180,6 +199,31 @@ export default function Panel() {
             columnas={[{ t: 'Cliente', v: (c) => c.cliente }, { t: 'Contacto', v: (c) => c.correo || c.telefono || '' }, { t: 'N', v: (c) => c.incidencias }]} />
         </div>
       </>}
+
+      {esCentral && borradas.length > 0 && (
+        <div className="rounded-lg border border-linea bg-white p-4">
+          <h2 className="text-lg font-bold">Incidencias borradas ({borradas.length})</h2>
+          <p className="mb-3 text-sm text-acero">No cuentan en las estadísticas ni aparecen en el listado de tickets. El administrador puede restaurarlas desde su ficha.</p>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[48rem] text-left text-sm">
+              <thead className="text-acero"><tr><th className="p-2">Nº</th><th className="p-2">Tienda</th><th className="p-2">Producto</th>
+                <th className="p-2">Cliente</th><th className="p-2">Borrada el</th><th className="p-2">Motivo</th></tr></thead>
+              <tbody>
+                {borradas.map((b) => (
+                  <tr key={b.id} className="border-t border-linea">
+                    <td className="p-2 font-bold"><Link to={`/ticket/${b.id}`} className="text-esmalte hover:underline">{b.number}</Link></td>
+                    <td className="p-2 whitespace-nowrap">{b.stores?.code} · {b.stores?.name}</td>
+                    <td className="p-2">{b.sku} <span className="text-acero">{b.product_description}</span></td>
+                    <td className="p-2">{b.customer_full_name}</td>
+                    <td className="p-2 whitespace-nowrap">{fecha(b.deleted_at)}</td>
+                    <td className="p-2">{b.delete_reason}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
