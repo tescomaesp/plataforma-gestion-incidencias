@@ -18,4 +18,5 @@ export interface Incidencia {
   purchase_date: string | null; incident_date: string; receipt_confirmed: boolean; gdpr_consent: boolean;
   status: Estado; resolution_type: Resultado | null; resolution_text: string | null;
   resolved_by: string | null; resolved_at: string | null; is_historical: boolean; created_at: string;
+  deleted_at: string | null; deleted_by: string | null; delete_reason: string | null;
 }
